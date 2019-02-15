@@ -1,0 +1,82 @@
+plugins {
+  id "java"
+  id "org.sonarqube" version "2.6"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url "http://repo.spring.io/snapshot" }
+}
+
+repositories {
+   flatDir {
+       dirs 'lib'
+   }
+}
+
+dependencies {
+	compile("org.springframework.boot:spring-boot-starter-web:1.4.2.RELEASE")
+}
+
+compileJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+task copySrc(type: Copy){
+    from "src"
+	exclude "main/java"
+	exclude "test"
+    into "$buildDir/libs/src"
+}
+
+task copyCmd(type: Copy) {
+    from "run.bat"
+    into "$buildDir/libs"
+}
+
+task copyConfig(type: Copy) {
+    from "config"
+    into "$buildDir/libs/config"
+}
+
+task copyResource(type: Copy) {
+    from "resources"
+    into "$buildDir/libs/resources"
+}
+
+task copyZones(type: Copy) {
+    from "zones"
+    into "$buildDir/libs/zones"
+}
+
+task copyRuntimeLibs(type: Copy){
+	from configurations.runtime
+    into "runtime-lib"
+}
+
+task copyLibs(type: Copy){
+	from "runtime-lib"
+    into "$buildDir/libs/lib"
+}
+
+
+//build đầy đủ
+task fatBuild(type: Copy, dependsOn: ["jar", "copySrc", "copyResource", "copyZones", "copyConfig", "copyCmd", "copyLibs"]) {
+	description 'Build jar, copy web source, config and run bath file'
+}
+
+task fatBuildUpdateLib(type: Copy, dependsOn: ["jar", "copySrc", "copyResource", "copyZones", "copyConfig", "copyCmd", "copyRuntimeLibs", "copyLibs"]) {
+	description 'Build jar, copy web source, config and run bath file'
+}
+
+//build bản nhẹ chỉ có src
+task("litBuild", type: Copy, dependsOn: "copySrc") {
+	description 'Copy web source'
+    from configurations.runtime
+    into "$buildDir/libs/lib"
+}
